@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Dice Game",
     description: "Play a simple dice game",
-    url: "https:/test.dice",
+    url: "https://dice-seven-vert.vercel.app",
     siteName: "Dice Game",
   },
 };
