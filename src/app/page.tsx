@@ -1,95 +1,93 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+'use client';
 
-export default function Home() {
+import { useState, useCallback } from 'react';
+import { GameForm } from '../components/GameForm';
+import { GameHistory } from '../components/GameHistory';
+import { Container, Snackbar, Alert, AlertTitle } from '@mui/material';
+
+interface GameResult {
+  time: string;
+  guess: string;
+  result: number;
+  success: boolean;
+}
+
+export default function HomePage() {
+  const [history, setHistory] = useState<GameResult[]>([]);
+  const [notification, setNotification] = useState<{
+    open: boolean;
+    message: string;
+    success: boolean;
+    detail?: string;
+    key: number; 
+  }>({
+    open: false,
+    message: '',
+    success: false,
+    key: new Date().getTime(),
+  });
+
+  const handlePlay = (threshold: number, condition: 'under' | 'over'): number => {
+    const rolledNumber = Math.floor(Math.random() * 100) + 1;
+    const now = new Date();
+    const time = now.toLocaleTimeString();
+
+    const success = condition === 'over' ? rolledNumber > threshold : rolledNumber < threshold;
+    const guess = `${condition === 'over' ? 'Over' : 'Under'} ${threshold}`;
+
+    const gameResult: GameResult = { time, guess, result: rolledNumber, success };
+
+    setHistory(prev => [gameResult, ...prev.slice(0, 9)]);
+
+    setNotification({
+      open: true,
+      success: success,
+      message: success ? 'You won' : 'You lost',
+      detail: !success 
+        ? condition === 'over'
+          ? 'Number was less'
+          : 'Number was higher'
+        : '',
+      key: new Date().getTime(),
+    });
+
+    return rolledNumber;
+  };
+
+  const handleCloseNotification = useCallback(() => {
+    setNotification((prev) => ({ ...prev, open: false }));
+  }, []);
+
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol>
-          <li>
-            Get started by editing <code>src/app/page.tsx</code>.
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    <Container maxWidth="sm" sx={{ mt: 10 }}>
+      <GameForm onPlay={handlePlay} />
+      <GameHistory history={history} />
 
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.secondary}
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className={styles.footer}>
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+      <Snackbar
+        open={notification.open}
+        autoHideDuration={3000}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        sx={{
+          maxWidth: 600,
+          width: '100%',
+        }}
+        onClose={handleCloseNotification}
+        key={notification.key} 
+      >
+        <Alert
+          severity={notification.success ? 'success' : 'error'}
+          variant="filled"
+          sx={{
+            width: '100%',
+          }}
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+          <AlertTitle>{notification.success ? 'You won' : 'You lost'}</AlertTitle>
+          {notification.detail}
+        </Alert>
+      </Snackbar>
+    </Container>
   );
 }
+
+
+
